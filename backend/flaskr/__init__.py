@@ -60,12 +60,14 @@ def create_app(test_config=None):
     end = start + QUESTIONS_PER_PAGE
 
     questions = list(map(Question.format,Question.query.all()))
+    total_questions = len(questions)
+    questions = questions[start:end]
     categories = list(map(Category.format, Category.query.all()))
 
     result = {
       "success": True,
       "questions": questions,
-      "totalQuestions": len(questions),
+      "totalQuestions": total_questions,
       "currentCategory": None,
       "categories": categories
     }
