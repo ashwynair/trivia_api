@@ -117,6 +117,36 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
   '''
+  @app.route('/api/questions', methods=['POST'])
+  def add_question():
+    error=False
+    try:
+      data = request.get_json()
+      question = Question(
+        question=data["question"],
+        answer=data["answer"],
+        category=data["category"],
+        difficulty=data["difficulty"]
+      )
+      question.insert()
+    except Exception:
+      error=True
+      db.session.rollback()
+      print(exc.info())
+    finally:
+      db.session.close()
+      print(error)
+      if error:
+        result = {
+          "success": False
+        }
+        return jsonify(result)
+      else:
+        result = {
+          "success": True
+        }
+        return jsonify(result)
+
 
   '''
   @TODO: 
@@ -128,6 +158,7 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
+  
 
   '''
   @TODO: 
