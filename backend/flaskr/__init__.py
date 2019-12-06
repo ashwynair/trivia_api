@@ -34,7 +34,7 @@ def create_app(test_config=None):
   '''
   @app.route('/api/categories', methods=["GET"])
   def all_categories():
-    categories = list(map(Category.format, Category.query.all()))
+    categories = list(map(Category.format, Category.query.order_by(Category.id.asc()).all()))
     result = {
       "success": True,
       "categories": categories
@@ -62,7 +62,7 @@ def create_app(test_config=None):
     questions = list(map(Question.format,Question.query.all()))
     total_questions = len(questions)
     questions = questions[start:end]
-    categories = list(map(Category.format, Category.query.all()))
+    categories = list(map(Category.format, Category.query.order_by(Category.id.asc()).all()))
 
     result = {
       "success": True,
