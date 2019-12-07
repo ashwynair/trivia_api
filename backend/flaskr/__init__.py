@@ -3,6 +3,7 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
+from sqlalchemy import func
 
 from models import db, setup_db, Question, Category
 
@@ -106,48 +107,6 @@ def create_app(test_config=None):
         print(result)
         return jsonify(result)
 
-
-  '''
-  @TODO: 
-  Create an endpoint to POST a new question, 
-  which will require the question and answer text, 
-  category, and difficulty score.
-
-  TEST: When you submit a question on the "Add" tab, 
-  the form will clear and the question will appear at the end of the last page
-  of the questions list in the "List" tab.  
-  '''
-  @app.route('/api/questions', methods=['POST'])
-  def add_question():
-    error=False
-    try:
-      data = request.get_json()
-      question = Question(
-        question=data["question"],
-        answer=data["answer"],
-        category=data["category"],
-        difficulty=data["difficulty"]
-      )
-      question.insert()
-    except Exception:
-      error=True
-      db.session.rollback()
-      print(exc.info())
-    finally:
-      db.session.close()
-      print(error)
-      if error:
-        result = {
-          "success": False
-        }
-        return jsonify(result)
-      else:
-        result = {
-          "success": True
-        }
-        return jsonify(result)
-
-
   '''
   @TODO: 
   Create a POST endpoint to get questions based on a search term. 
@@ -158,7 +117,57 @@ def create_app(test_config=None):
   only question that include that string within their question. 
   Try using the word "title" to start. 
   '''
-  
+  '''
+  @TODO: 
+  Create an endpoint to POST a new question, 
+  which will require the question and answer text, 
+  category, and difficulty score.
+
+  TEST: When you submit a question on the "Add" tab, 
+  the form will clear and the question will appear at the end of the last page
+  of the questions list in the "List" tab.  
+  '''
+
+  @app.route('/api/questions', methods=['POST'])
+  def add_question():
+    data = request.get_json()
+    if "searchTerm" in data:
+      questions = Question.query.filter(
+        func.lower(Question.question).like('%{}%'.format(data["searchTerm"].lower()))
+        ).all()
+      formatted_questions = list(map(Question.format, questions))
+      result = {
+        "questions": formatted_questions,
+        "total_questions": len(formatted_questions),
+        "current_category": None
+      }
+      return jsonify(result)
+    else:
+      error=False
+      try:
+        question = Question(
+          question=data["question"],
+          answer=data["answer"],
+          category=data["category"],
+          difficulty=data["difficulty"]
+        )
+        question.insert()
+      except Exception:
+        error=True
+        db.session.rollback()
+        print(exc.info())
+      finally:
+        db.session.close()
+        if error:
+          result = {
+            "success": False
+          }
+          return jsonify(result)
+        else:
+          result = {
+            "success": True
+          }
+          return jsonify(result)
 
   '''
   @TODO: 
@@ -168,6 +177,7 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
+  
 
 
   '''
