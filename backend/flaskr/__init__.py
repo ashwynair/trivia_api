@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
 from sqlalchemy import func
+import json
 
 from models import db, setup_db, Question, Category
 
@@ -36,9 +37,14 @@ def create_app(test_config=None):
   @app.route('/api/categories', methods=["GET"])
   def all_categories():
     categories = list(map(Category.format, Category.query.order_by(Category.id.asc()).all()))
+    data = {}
+    for category in categories:
+      data.update({
+        category["id"]: category["type"]
+      })
     result = {
       "success": True,
-      "categories": categories
+      "categories": data
     }
     return jsonify(result)
 
@@ -63,7 +69,8 @@ def create_app(test_config=None):
     questions = list(map(Question.format,Question.query.all()))
     total_questions = len(questions)
     questions = questions[start:end]
-    categories = list(map(Category.format, Category.query.order_by(Category.id.asc()).all()))
+    
+    categories = all_categories().get_json()["categories"]
 
     result = {
       "success": True,
@@ -86,6 +93,8 @@ def create_app(test_config=None):
     error = False
     try:
       question = Question.query.get(question_id)
+      if not question:
+        abort(404)
       question.delete()
     except Exception:
       error = True
@@ -94,11 +103,7 @@ def create_app(test_config=None):
     finally:
       db.session.close()
       if error:
-        result = {
-          "success": False,
-        }
-        print(result)
-        return jsonify(result)
+        abort(500)
       else:
         result = {
           "success": True,
@@ -131,6 +136,7 @@ def create_app(test_config=None):
   @app.route('/api/questions', methods=['POST'])
   def add_question():
     data = request.get_json()
+    # POST for searching questions
     if "searchTerm" in data:
       questions = Question.query.filter(
         func.lower(Question.question).like('%{}%'.format(data["searchTerm"].lower()))
@@ -142,7 +148,11 @@ def create_app(test_config=None):
         "current_category": None
       }
       return jsonify(result)
+    # POST for adding new questions
     else:
+      if not (data["question"] and data["answer"] and data["category"] and data["difficulty"]):
+        abort(422)
+      
       error=False
       try:
         question = Question(
@@ -159,10 +169,7 @@ def create_app(test_config=None):
       finally:
         db.session.close()
         if error:
-          result = {
-            "success": False
-          }
-          return jsonify(result)
+          abort(500)
         else:
           result = {
             "success": True
@@ -181,13 +188,17 @@ def create_app(test_config=None):
   def questions_by_category(category_id):
     questions = list(map(Question.format, Question.query.
                      filter_by(category=category_id).all()))
+
+    category = Category.query.get(category_id)
+    if not category:
+      abort(404)
+
     result = {
       "questions": questions,
       "total_questions": len(questions),
       "current_category": category_id
     }
     return jsonify(result)
-
 
 
   '''
@@ -201,12 +212,58 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  @app.route('/api/quizzes', methods=["POST"])
+  def quiz():
+    data = request.get_json()
+    prev_qs = list(data["previous_questions"])
+    quiz_category = int(data["quiz_category"]["id"])
+
+    if quiz_category:
+
+      if not Category.query.get(quiz_category):
+        abort(404)
+      get_questions = Question.query.filter(
+        Question.category == quiz_category,
+        Question.id.notin_(prev_qs)).all()
+    else:
+      get_questions = Question.query.filter(
+        Question.id.notin_(prev_qs)).all()
+    
+    if len(get_questions) == 0:
+      return jsonify(None)
+    else:
+      questions = list(map(Question.format, get_questions))
+      question = random.choice(questions)
+      return jsonify(question)
 
   '''
   @TODO: 
   Create error handlers for all expected errors 
   including 404 and 422. 
   '''
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+      "success": False, 
+      "error": 404,
+      "message": "Not found."
+      }), 404
+
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return jsonify({
+      "success": False, 
+      "error": 422,
+      "message": "We couldn't process your request."
+      }), 422
+
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return jsonify({
+      "success": False, 
+      "error": 500,
+      "message": "Something went wrong."
+      }), 500
   
   return app
 
