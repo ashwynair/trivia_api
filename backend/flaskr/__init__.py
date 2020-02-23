@@ -195,6 +195,14 @@ def create_app(test_config=None):
             question = random.choice(questions)
             return jsonify(question)
 
+    @app.errorhandler(400)
+    def not_found(error):
+        return jsonify({
+            "success": False,
+            "error": 400,
+            "message": "Bad request."
+        }), 400
+
     @app.errorhandler(404)
     def not_found(error):
         return jsonify({
@@ -211,7 +219,7 @@ def create_app(test_config=None):
             "message": "We couldn't process your request."
         }), 422
 
-    @app.errorhandler(422)
+    @app.errorhandler(500)
     def unprocessable(error):
         return jsonify({
             "success": False,
