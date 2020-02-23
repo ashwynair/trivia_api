@@ -99,8 +99,11 @@ def create_app(test_config=None):
     @app.route('/api/questions', methods=['POST'])
     def add_question():
         """
-        POST method to add a question
-        :return: JSON object with success as True if question was added
+        POST method to add a question, or search for questions
+        :return:
+        - If search: Returns questions based on search term
+        - If adding question: Returns JSON object confirming
+        question was added
         """
         data = request.get_json()
         # POST for searching questions
