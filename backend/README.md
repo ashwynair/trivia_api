@@ -32,7 +32,11 @@ This will install all of the required packages we selected within the `requireme
 
 ## Database Setup
 With Postgres running, restore a database using the trivia.psql file provided. From the backend folder in terminal run:
+
+*Note: Please ensure you have the postgres role available.*
+
 ```bash
+createdb trivia
 psql trivia < trivia.psql
 ```
 
@@ -66,26 +70,117 @@ One note before you delve into your tasks: for each endpoint you are expected to
 8. Create a POST endpoint to get questions to play the quiz. This endpoint should take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions. 
 9. Create error handlers for all expected errors including 400, 404, 422 and 500. 
 
-REVIEW_COMMENT
+## API Documentation
 ```
-This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
+
+Note: All endpoints below will contain the "success": True key-value pair.
 
 Endpoints
-GET '/categories'
-GET ...
-POST ...
-DELETE ...
+GET '/api/categories'
+GET '/api/questions'
+DELETE '/api/questions/<int:question_id>'
+POST '/api/questions'
+GET '/api/categories/<int:category_id>/questions'
+POST '/api/quizzes'
 
-GET '/categories'
-- Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
+GET '/api/categories'
+- Fetches a dictionary of categories in which the keys are the ids 
+and the value is the corresponding string of the category
 - Request Arguments: None
-- Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs. 
-{'1' : "Science",
-'2' : "Art",
-'3' : "Geography",
-'4' : "History",
-'5' : "Entertainment",
-'6' : "Sports"}
+- Returns: An object with a key called categories, that contains an object of id: category_string key:value pairs. 
+
+{
+  "categories": {
+    "1": "Science", 
+    "2": "Art", 
+    "3": "Geography", 
+    "4": "History", 
+    "5": "Entertainment", 
+    "6": "Sports"
+  }, 
+  "success": true
+}
+
+GET '/api/questions'
+- Fetches a dictionary containing an array of questions, the total no. of questions and categories
+- Request Arguments: None
+- Returns: JSON object with 5 keys: categories (same object as /api/categories), current_category (set to null), 
+questions (array of objects for each question), success (set to true)
+and total_questions (length of array of questions).
+
+{
+  "categories": {
+    "1": "Science", 
+    "2": "Art", 
+    "3": "Geography", 
+    "4": "History", 
+    "5": "Entertainment", 
+    "6": "Sports"
+  }, 
+  "current_category": null, 
+  "questions": [
+    {
+      "answer": "Maya Angelou", 
+      "category": 4, 
+      "difficulty": 2, 
+      "id": 5, 
+      "question": "Whose autobiography is entitled 'I Know Why the Caged Bird Sings'?"
+    },
+  ], 
+  "success": true, 
+  "total_questions": 1
+}
+
+DELETE '/api/questions/<int:question_id>'
+- Deletes a user-specified question
+- Request Arguments: question_id (ID of a question)
+- Returns: JSON object with 2 keys: success (set to True), deleted_question (ID of question deleted)
+
+{
+  "success": True,
+  "deleted_question": 2
+}
+
+POST '/api/questions'
+- Either returns all questions based on searched term or adds a question
+- Request Arguments: None
+- Returns: 
+  - If search: Returns questions based on search term
+  - If adding question: Returns JSON object confirming question was added
+
+GET '/api/categories/<int:category_id>/questions'
+- Fetches a dictionary containing all questions based on the category selected
+- Request Arguments: category_id (ID of category for question)
+- Returns: questions, the category ID and number of questions
+
+{
+  "current_category": 1, 
+  "questions": [
+    {
+      "answer": "The Liver", 
+      "category": 1, 
+      "difficulty": 4, 
+      "id": 20, 
+      "question": "What is the heaviest organ in the human body?"
+    }, 
+  ], 
+  "total_questions": 1
+}
+
+POST '/api/quizzes'
+- POST method for quiz to return a random question not previously shown within the quiz
+- Request Arguments: None
+- Returns: 
+  - If search: Returns questions based on search term
+  - If adding question: Returns JSON object confirming question was added
+
+{
+  'id': 1,
+  'question': "What is the heaviest organ in the human body?",
+  'answer': "The Liver",
+  'category': 1,
+  'difficulty': 4
+}
 
 ```
 
