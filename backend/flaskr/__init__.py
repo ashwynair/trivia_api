@@ -97,7 +97,7 @@ def create_app(test_config=None):
                 return jsonify(result)
 
     @app.route('/api/questions', methods=['POST'])
-    def add_question():
+    def add_or_search_question():
         """
         POST method to add a question, or search for questions
         :return:
@@ -105,7 +105,7 @@ def create_app(test_config=None):
         - If adding question: Returns JSON object confirming
         question was added
         """
-        data = request.get_json()
+        data = dict(request.get_json())
         # POST for searching questions
         if "searchTerm" in data:
             questions = Question.query.filter(
@@ -113,6 +113,7 @@ def create_app(test_config=None):
             ).all()
             formatted_questions = list(map(Question.format, questions))
             result = {
+                "success": True,
                 "questions": formatted_questions,
                 "total_questions": len(formatted_questions),
                 "current_category": None
@@ -120,7 +121,7 @@ def create_app(test_config=None):
             return jsonify(result)
         # POST for adding new questions
         else:
-            if not (data["question"] and data["answer"] and data["category"] and data["difficulty"]):
+            if not all(key in data.keys() for key in ("question", "answer", "category", "difficulty")):
                 abort(422)
 
             error = False
@@ -163,7 +164,8 @@ def create_app(test_config=None):
         result = {
             "questions": questions,
             "total_questions": len(questions),
-            "current_category": category_id
+            "current_category": category_id,
+            "success": True
         }
         return jsonify(result)
 
@@ -193,7 +195,10 @@ def create_app(test_config=None):
         else:
             questions = list(map(Question.format, get_questions))
             question = random.choice(questions)
-            return jsonify(question)
+            return jsonify({
+                "success": True,
+                **question
+            })
 
     @app.errorhandler(400)
     def not_found(error):

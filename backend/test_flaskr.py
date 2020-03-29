@@ -32,11 +32,87 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
-    """
-    TODO
-    Write at least one test for each test for 
-    successful operation and for expected errors.
-    """
+    def test_get_questions(self):
+        """Test for retrieving questions"""
+        res = self.client().get('/api/questions')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertLessEqual(len(data['questions']), 10)
+        self.assertTrue(data)
+
+    def test_get_categories(self):
+        """Test for retrieving categories"""
+        res = self.client().get('/api/categories')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertTrue(data)
+
+    def test_500_delete_nonexistent_question(self):
+        """Test for deleting nonexistent question"""
+        res = self.client().delete('/api/questions/5000')
+        self.assertEqual(res.status_code, 500)
+        data = json.loads(res.data)
+        self.assertFalse(data["success"])
+
+    def test_questions_with_search(self):
+        """Test for retrieving questions with search term"""
+        res = self.client().post('/api/questions', json={"searchTerm": "a"})
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertTrue(data["success"])
+        self.assertTrue(data["questions"])
+        self.assertTrue(data["total_questions"])
+
+    def test_add_new_question_success(self):
+        """Test for adding questions"""
+        res = self.client().post('/api/questions', json={
+            "question": "This is a question",
+            "answer": "This is the answer",
+            "category": 1,
+            "difficulty": 2
+        })
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertTrue(data["success"])
+
+    def test_422_add_new_question(self):
+        """Test for adding question without answer"""
+        res = self.client().post('/api/questions', json={
+            "question": "This is a question",
+            "category": 1,
+            "difficulty": 2
+        })
+        self.assertEqual(res.status_code, 422)
+        data = json.loads(res.data)
+        self.assertFalse(data["success"])
+
+    def test_get_questions_by_category(self):
+        """Test for adding question without answer"""
+        res = self.client().get('/api/categories/1/questions')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertTrue(data["success"])
+        self.assertTrue(data["questions"])
+        self.assertTrue(data["total_questions"])
+
+    def test_404_get_question_by_category(self):
+        """Test for adding question without answer"""
+        res = self.client().get('/api/categories/101/questions')
+        self.assertEqual(res.status_code, 404)
+        data = json.loads(res.data)
+        self.assertFalse(data["success"])
+
+    def test_quiz_questions(self):
+        """Test for adding question without answer"""
+        res = self.client().post('/api/quizzes', json={
+            "previous_questions": [],
+            "quiz_category": {
+                "id": 1
+            }
+        })
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertTrue(data["success"])
 
 
 # Make the tests conveniently executable
